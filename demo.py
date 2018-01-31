@@ -18,7 +18,7 @@ while 1 :
         im_name = raw_input("\nplease input file name: ")
 
     if im_name == "exit":
-       break
+        break
     im_path = "./img/" + im_name
     im = cv2.imread(im_path)
     if im is None:
