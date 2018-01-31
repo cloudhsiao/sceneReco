@@ -1,6 +1,7 @@
 
 import sys
 import numpy as np
+
 class cfg:
     MEAN=np.float32([102.9801, 115.9465, 122.7717])
     TEST_GPU_ID=0
@@ -22,6 +23,7 @@ def init():
     sys.path.insert(0, "./CTPN/tools")
     sys.path.insert(0, "./CTPN/caffe/python")
     sys.path.insert(0, "./CTPN/src")
+
 init()
 
 from other import draw_boxes, resize_im, CaffeModel
@@ -30,32 +32,31 @@ from detectors import TextProposalDetector, TextDetector
 import os.path as osp
 from utils.timer import Timer
 
-
-
 def ctpnSource():
     DEMO_IMAGE_DIR = "img/"
     NET_DEF_FILE = "CTPN/models/deploy.prototxt"
     MODEL_FILE = "CTPN/models/ctpn_trained_model.caffemodel"
-    caffe.set_mode_gpu()
-    caffe.set_device(cfg.TEST_GPU_ID)
+    # caffe.set_mode_gpu()
+    # caffe.set_device(cfg.TEST_GPU_ID)
+    caffe.set_mode_cpu()
     # initialize the detectors
     text_proposals_detector = TextProposalDetector(CaffeModel(NET_DEF_FILE, MODEL_FILE))
     text_detector = TextDetector(text_proposals_detector)
     return text_detector
 
-def getCharBlock(text_detector,im):
-    im, f=resize_im(im, cfg.SCALE, cfg.MAX_SCALE)
+def getCharBlock(text_detector, im):
+    im, f = resize_im(im, cfg.SCALE, cfg.MAX_SCALE)
     cv2.imshow("src", im)
     tmp = im.copy()
     #timer=Timer()
     #timer.tic()
-    text_lines=text_detector.detect(im)
+    text_lines = text_detector.detect(im)
 
     #print "Number of the detected text lines: %s"%len(text_lines)
     #print "Time: %f"%timer.toc()
 
     text_recs = draw_boxes(tmp, text_lines, caption='im_name', wait=True)
-    return tmp,text_recs
+    return tmp, text_recs
 
 
     

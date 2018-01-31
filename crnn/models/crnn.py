@@ -1,5 +1,14 @@
 import torch.nn as nn
-import utils
+
+
+def data_parallel(model, input, ngpu):
+    import torch.nn as nn
+    import torch.nn.parallel
+    if isinstance(input.data, torch.cuda.FloatTensor) and ngpu > 1:
+        output = nn.parallel.data_parallel(model, input, range(ngpu))
+    else:
+        output = model(input)
+    return output
 
 
 class BidirectionalLSTM(nn.Module):
@@ -12,12 +21,12 @@ class BidirectionalLSTM(nn.Module):
         self.embedding = nn.Linear(nHidden * 2, nOut)
 
     def forward(self, input):
-        recurrent, _ = utils.data_parallel(
+        recurrent, _ = data_parallel(
             self.rnn, input, self.ngpu)  # [T, b, h * 2]
 
         T, b, h = recurrent.size()
         t_rec = recurrent.view(T * b, h)
-        output = utils.data_parallel(
+        output = data_parallel(
             self.embedding, t_rec, self.ngpu)  # [T * b, nOut]
         output = output.view(T, b, -1)
 
@@ -75,13 +84,14 @@ class CRNN(nn.Module):
 
     def forward(self, input):
         # conv features
-        conv = utils.data_parallel(self.cnn, input, self.ngpu)
+        conv = data_parallel(self.cnn, input, self.ngpu)
         b, c, h, w = conv.size()
         assert h == 1, "the height of conv must be 1"
         conv = conv.squeeze(2)
         conv = conv.permute(2, 0, 1)  # [w, b, c]
 
         # rnn features
-        output = utils.data_parallel(self.rnn, conv, self.ngpu)
+        output = data_parallel(self.rnn, conv, self.ngpu)
 
         return output
+
